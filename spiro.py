@@ -1,7 +1,17 @@
 #!/usr/bin/env python3
 
 """
-The spirographs implemented by turtle. Smart turtle
+The spirographs implemented by turtle. Smart turtle.
+This program draws Spirographs using the Turtle module.
+When run with no arguments, this program draws random Spirographs.
+
+Terminology:
+    R: radius of outer circle.
+    r: radius of inner circle.
+    l: ratio of hole distance to r.
+
+Count:
+    The count of spirographs, should be in 1 - 5.
 """
 
 import random
@@ -12,10 +22,15 @@ import argparse
 
 import math
 
+from datetime import datetime
+
+import sys
+from PIL import Image
+
 
 class Spiro:
     def __init__(self, xc, yc, col, R, r, l):
-        self.turtle = turtle.Turtle()
+        self.turtle = Turtle()
         # set the cursor shape
         self.turtle.shape('turtle')
         # set the step in degrees
@@ -64,7 +79,7 @@ class Spiro:
 
     def draw(self):
         R, k, l = self.R, self.k, self.l
-        for i in range(0, 360 * self.n_rot + 1, self.step):
+        for i in range(0, int(360 * self.n_rot + 1), self.step):
             a = math.radians(i)
             x = R * ((1 - k) * math.cos(a) + 1 * k * math.cos((1 - k) * a / k))
             y = R * ((1 - k) * math.sin(a) - 1 * k * math.sin((1 - k) * a / k))
@@ -131,7 +146,7 @@ class SpiroAnimator:
             # generate random parameters
             rparams = self.gen_random_params()
             # set the spiro parameters
-            spiro.setparams(*rparams)
+            spiro.set_parameters(*rparams)
             #  restart drawing
             spiro.restart()
 
@@ -154,24 +169,69 @@ class SpiroAnimator:
                 sprio.turtle.showturtle()
 
 
+def save_drawing():
+    """save drawing as PNG files"""
+    turtle.hideturtle()
+    # generate unique file name
+    date_str = (datetime.now()).strftime('%d%b%Y-%H%M%S')
+    file_name = 'spiro-' + date_str
+    print('saving drawing to %s.eps/png' % file_name)
+    # get the tkinter canvas
+    canvas = turtle.getcanvas()
+    # saving the drawing as a postscript image
+    canvas.postscript(file=file_name + '.eps')
+    # use the Pillow module to convert the postscript image file to PNG
+    img = Image.open(file_name + '.eps')
+    img.save(file_name + '.png', 'png')
+    # show the turtle cursor
+    turtle.showturtle()
+
+
 def main():
+    # use sys.argv if needed
+    print('generating spirograph')
+    # create parser
     parser = argparse.ArgumentParser(description=__doc__)
 
-    parser.add_argument('-c', '--count', dest='count', default=1, required=False,
-                        help='the count of spirographs, should be in 1 - 4', type=int)
+    # add expected arguments
+    parser.add_argument('--sparams', nargs=3, dest='sparams', required=False,
+                        help='The three arguments in sparams: R, r, l. ')
 
+    parser.add_argument('-c', '--count', dest='count', default=3, required=False,
+                        help='The count of spirographs, should be in 1 - 5', type=int)
+
+    # parse args
     args = parser.parse_args()
     turtle.setup(width=0.8)
     turtle.shape('turtle')
+    # set title
     turtle.title('Spirographs! ')
+    # add the key handler to save our drawings
+    turtle.onkey(save_drawing, 's')
+    turtle.onkey(sys.exit, 'q')
+
+    # hide the main turtle cursor
     turtle.hideturtle()
 
-    count = 1
-    if args.count and 0 < args.count < 5:
-        count = args.count
-    spiro_anim = SpiroAnimator(count)
-    turtle.onkey(spiro_anim.toggle_turtles, 't')
+    if args.sparams:
+        params = [float(x) for x in args.sparams]
+        # draw the Spirograph with the given parameters
+        col = 0.0, 0.0, 0.0
+        spiro = Spiro(0, 0, col, *params)
+        spiro.draw()
+    else:
+        count = 3
+        if 0 < args.count <= 5:
+            count = args.count
+        # create the animator object
+        spiro_anim = SpiroAnimator(count)
+        # add a key handler to toggle the turtle cursor
+        turtle.onkey(spiro_anim.toggle_turtles, 't')
+        # add a key handler to restart the animation
+        turtle.onkey(spiro_anim.restart, 'space')
 
+    # start listening
+    turtle.listen()
     turtle.mainloop()
 
 
