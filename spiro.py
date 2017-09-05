@@ -10,8 +10,6 @@ Terminology:
     r: radius of inner circle.
     l: ratio of hole distance to r.
 
-Count:
-    The count of spirographs, should be in 1 - 5.
 """
 
 import random
@@ -158,7 +156,8 @@ class SpiroAnimator:
             if spiro.drawing_complete:
                 n_complete += 1
         if n_complete == len(self.spiros):
-            self.restart()
+            # self.restart()
+            pass
         turtle.ontimer(self.update, self.delta_t)
 
     def toggle_turtles(self):
@@ -189,7 +188,7 @@ def save_drawing():
 
 def main():
     # use sys.argv if needed
-    print('generating spirograph')
+
     # create parser
     parser = argparse.ArgumentParser(description=__doc__)
 
@@ -197,8 +196,8 @@ def main():
     parser.add_argument('--sparams', nargs=3, dest='sparams', required=False,
                         help='The three arguments in sparams: R, r, l. ')
 
-    parser.add_argument('-c', '--count', dest='count', default=3, required=False,
-                        help='The count of spirographs, should be in 1 - 5', type=int)
+    parser.add_argument('-c', '--count', dest='count', default=random.randint(3, 10), required=False,
+                        help='The count of spirographs.', type=int)
 
     # parse args
     args = parser.parse_args()
@@ -213,6 +212,12 @@ def main():
     # hide the main turtle cursor
     turtle.hideturtle()
 
+    print('generating spirograph')
+    print("key: 's', save image")
+    print("key: 'q', quit application")
+    print("key: 't', toggle_turtles")
+    print("key: 'space', restart all turtles")
+
     if args.sparams:
         params = [float(x) for x in args.sparams]
         # draw the Spirograph with the given parameters
@@ -220,9 +225,7 @@ def main():
         spiro = Spiro(0, 0, col, *params)
         spiro.draw()
     else:
-        count = 3
-        if 0 < args.count <= 5:
-            count = args.count
+        count = args.count
         # create the animator object
         spiro_anim = SpiroAnimator(count)
         # add a key handler to toggle the turtle cursor
