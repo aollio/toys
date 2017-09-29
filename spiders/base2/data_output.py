@@ -47,7 +47,11 @@ class DataOutput:
             return
         self.datas.append(data)
         if len(self.datas) > 10:
-            self.output_html(self.filepathedr4)
+            self.output_html(self.filepath)
+
+    def flush_data(self):
+        if len(self.datas) != 0:
+            self.output_html(self.filepath)
 
     def output_html(self, path):
         fout = codecs.open(path, 'a', encoding='utf-8')
