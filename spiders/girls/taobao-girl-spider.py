@@ -53,8 +53,7 @@ class TaoBaoGirlSpider:
     def __init__(self):
         dcap = dict(DesiredCapabilities.PHANTOMJS)
         dcap['phantomjs.page.settings.userAgent'] = USER_AGENT
-        self.driver = webdriver.PhantomJS(executable_path='/Users/Aollio/Development/phantomjs/bin/phantomjs',
-                                          desired_capabilities=dcap)
+        self.driver = webdriver.PhantomJS(desired_capabilities=dcap)
 
         self.driver.get('https://www.taobao.com/markets/mm/mmku')
         # wait rendered
