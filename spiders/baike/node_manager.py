@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 
 from os import path
-from queue import Queue
 from multiprocessing.managers import BaseManager
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 
 import time
 
@@ -25,15 +24,18 @@ class NodeManager:
         BaseManager.register('get_task_queue', callable=lambda: url_q)
         BaseManager.register('get_result_queue', callable=lambda: result_q)
         # 绑定端口8001, 设置验证口令 'baike'. 这个相当于对象的初始化
-        manager = BaseManager(address=('', 8001), authkey='baike')
+        manager = BaseManager(address=('127.0.0.1', 8001), authkey=b'baike')
         return manager
 
     def url_manager_proc(self, url_q: Queue, conn_q: Queue, root_url):
+        print('url manager process start...')
         url_manager = UrlManager()
         url_manager.add_new_url(root_url)
+        print('url manager process started...')
         while True:
             while url_manager.has_new_url():
                 new_url = url_manager.get_new_url()
+                print('new_url', new_url)
                 # 将新的URL发给工作节点
                 url_q.put(new_url)
                 # 加一个判断条件, 当爬取2000个链接后就关闭, 并保存进度
@@ -85,6 +87,7 @@ class NodeManager:
 
 
 def main():
+    print('init...')
     # 初始化各个管理进程需要的通信通道
     # url_q队列是URL管理进程将URL传递给爬虫节点的通道
     url_q = Queue()
@@ -99,7 +102,7 @@ def main():
     node = NodeManager()
     manager = node.start_manager(url_q, result_q)
     # 创建URL管理进程, 数据提取进程和数据存储进程
-    root_url = ""
+    root_url = "https://baike.baidu.com/item/网络爬虫/5162711"
     url_manager_proc = Process(target=node.url_manager_proc, args=(url_q, conn_q, root_url))
     result_solve_proc = Process(target=node.result_solve_proc, args=(result_q, conn_q, store_q))
     store_proc = Process(target=node.store_proc, args=(store_q,))
@@ -107,6 +110,7 @@ def main():
     url_manager_proc.start()
     result_solve_proc.start()
     store_proc.start()
+    print('init finish.')
     manager.get_server().serve_forever()
 
 

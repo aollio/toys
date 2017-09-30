@@ -9,7 +9,7 @@ __email__ = 'aollio@outlook.com'
 
 def md5(url):
     md5lib = hashlib.md5()
-    md5lib.update(url)
+    md5lib.update(url.encode('utf-8'))
     return md5lib.hexdigest()[8:-8]
 
 
