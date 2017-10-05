@@ -47,7 +47,8 @@ class Interpreter:
         self.current_token = None
 
     def error(self):
-        raise Exception('Error parsing input')
+        """lexeme parsing error."""
+        raise Exception('Invalid syntax')
 
     def get_next_token(self):
         """
@@ -106,6 +107,15 @@ class Interpreter:
         else:
             self.error()
 
+    def term(self):
+        """
+        Return a integer token value
+        :return:
+        """
+        token = self.current_token
+        self.eat(INTEGER)
+        return token.value
+
     def expr(self):
         """
         expr -> INTEGER PLUS INTEGER
@@ -115,20 +125,17 @@ class Interpreter:
         self.current_token = self.get_next_token()
 
         # we expect the current token to be a single-digit integer
-        left = self.current_token
-        self.eat(INTEGER)
+        result = self.term()
+        while self.current_token.value in OPERATORLIST:
+            # we expect the current token to be a '+' token
+            op = self.current_token
+            self.eat(OPERATOR)
 
-        # we expect the current token to be a '+' token
-        op = self.current_token
-        self.eat(OPERATOR)
+            right = self.term()
 
-        right = self.current_token
-        self.eat(INTEGER)
-
+            result = operator(result, op.value, right)
         # after the above call the self.current_token is set to
         # EOF token
-
-        result = operator(left.value, op.value, right.value)
         return result
 
 
