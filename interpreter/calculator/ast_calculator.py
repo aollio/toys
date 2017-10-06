@@ -230,6 +230,37 @@ class Interpreter(NodeVisitor):
         return self.visit(tree)
 
 
+class ReversePolishNotation(NodeVisitor):
+    def __init__(self, parser: Parser):
+        self.parser = parser
+
+    def visit_BinOp(self, node):
+        return "{left} {right} {op}".format(left=self.visit(node.left), right=self.visit(node.right), op=node.op.value)
+
+    def visit_Num(self, node):
+        return str(node.value)
+
+    def interpret(self):
+        tree = self.parser.parser()
+        return self.visit(tree)
+
+
+class LISPNotation(NodeVisitor):
+    def __init__(self, parser: Parser):
+        self.parser = parser
+
+    def visit_BinOp(self, node):
+        return "({op} {left} {right})".format(left=self.visit(node.left), right=self.visit(node.right),
+                                              op=node.op.value)
+
+    def visit_Num(self, node):
+        return str(node.value)
+
+    def interpret(self):
+        tree = self.parser.parser()
+        return self.visit(tree)
+
+
 def main():
     while True:
         try:
