@@ -74,6 +74,8 @@ class Lexer:
             if self.current_char.isdigit():
                 return Token(INTEGER, self.integer())
 
+
+
             if self.current_char == '+':
                 self.advance()
                 return Token(PLUS, '+')
@@ -127,6 +129,12 @@ class BinOp(AST):
         self.right = right
 
 
+class UnaryOp(AST):
+    def __init__(self, expr, op):
+        self.expr = expr
+        self.op = op
+
+
 class Num(AST):
     def __init__(self, token):
         self.token = token
@@ -156,6 +164,12 @@ class Parser:
         if token.type == INTEGER:
             self.eat(INTEGER)
             return Num(token)
+        elif token.type == MINUS:
+            self.eat(MINUS)
+            return UnaryOp(self.factor(), '-')
+        elif token.type == PLUS:
+            self.eat(PLUS)
+            return UnaryOp(self.factor(), '+')
         elif token.type == LPAREN:
             self.eat(LPAREN)
             node = self.expr()
@@ -224,6 +238,12 @@ class Interpreter(NodeVisitor):
 
     def visit_Num(self, node):
         return node.value
+
+    def visit_UnaryOp(self, node):
+        if node.op == '-':
+            return -1 * self.visit(node.expr)
+        else:
+            return self.visit(node.expr)
 
     def interpret(self):
         tree = self.parser.parser()
