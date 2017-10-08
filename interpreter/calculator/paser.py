@@ -26,7 +26,7 @@ class Lexer:
     def __init__(self, text):
         # client string input, e.g. "3 * 5", "12 / 3 * 4", etc
         self.text = text
-        # self.pos is an index into self.text
+        # self.pos is an index into self.text.pas
         self.pos = 0
         self.current_char = self.text[self.pos]
 

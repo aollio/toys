@@ -41,7 +41,7 @@ class Interpreter:
     def __init__(self, text):
         # client string input, e.g. '3+5'
         self.text = text
-        # self.pos is an index in self.text
+        # self.pos is an index in self.text.pas
         self.pos = 0
         # current token instance
         self.current_token = None
@@ -58,7 +58,7 @@ class Interpreter:
         :return:
         """
         text = self.text
-        # is self.pos index past the end of the self.text ?
+        # is self.pos index past the end of the self.text.pas ?
         # if so, then return EOF token because there is no more input left
         # to convert into tokens
         if self.pos > len(text) - 1:
