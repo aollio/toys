@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 
-from .lexer import *
+from lexer import *
 
 __author__ = 'Aollio Hou'
 __email__ = 'aollio@outlook.com'

@@ -4,12 +4,10 @@
 Simple Pascal Interpreter
 """
 from collections import OrderedDict
-from .parser import *
+from parser import *
 
 __author__ = 'Aollio Hou'
 __email__ = 'aollio@outlook.com'
-
-
 
 
 ###############################################################################
@@ -95,7 +93,7 @@ class ScopedSymbolTable:
         self._symbols[symbol.name] = symbol
 
     def lookup(self, name: str):
-        print('Lookup %s. (Scope name: %s)' % (name, self.scope_name))
+        # print('Lookup %s. (Scope name: %s)' % (name, self.scope_name))
         symbol = self._symbols.get(name)
 
         if symbol is None and self.parent is not None:
@@ -125,13 +123,20 @@ class ScopedSymbolTable:
 
 
 class SemanticAnalyzer(Visitor):
-    def __init__(self):
+    def __init__(self, tree):
         self.current_scope = None
+        self.root_scope = None
+        self.tree = tree
+
+    def analyze(self):
+        self.visit(self.tree)
+        return self.root_scope
 
     def visit_program(self, node: Program):
         print('ENTER scope: global')
         global_scope = ScopedSymbolTable(scope_name='global', scope_level=1, init_builtin=True)
         self.current_scope = global_scope
+        self.root_scope = global_scope
         # visit sub tree
         self.visit(node.block)
 
@@ -230,16 +235,42 @@ def op_operate(left, op, right):
         return left // right
 
 
+class Memory(dict):
+    def __init__(self, parent=None):
+        super(Memory, self).__init__()
+        self.parent = parent
+
+    def get(self, k, **kwargs):
+        value = super(Memory, self).get(k, None)
+        if value is not None:
+            return value
+
+        if self.parent is not None:
+            return self.parent.get(k, **kwargs)
+
+
 class Interpreter(Visitor):
-    def __init__(self):
-        self.global_scope = {}
+    def __init__(self, tree, scope: ScopedSymbolTable):
+        # symbol table
+        self.tree = tree
+        self.current_symtab = scope
+        # global memory
+        self.memory = Memory()
+
+    def intreperter(self):
+        self.visit(self.tree)
+        print(self.memory)
 
     def visit_program(self, node: Program):
-        print('running', node.name)
+        print('Running', node.name)
         self.visit(node.block)
 
-    def visit_procedure(self, node: ProcedureDeclare):
-        self.visit(node.block)
+    def visit_proceduredeclare(self, node: ProcedureDeclare):
+        """Procedure declare already is symbol in symbol table."""
+        pass
+
+    def visit_param(self):
+        pass
 
     def visit_block(self, node: Block):
         for child in node.declarations:
@@ -250,16 +281,29 @@ class Interpreter(Visitor):
         for child in node.children:
             self.visit(child)
 
-    def visit_declare(self, node: VarDeclare):
-        for var in node.variable_list:
-            self.global_scope[var.value] = None
+    def visit_vardeclare(self, node: VarDeclare):
+        pass
 
     def visit_assign(self, node: Assign):
-        self.global_scope[node.left.value] = self.visit(node.right)
+        """Assign value will check type of variable"""
+        value = self.visit(node.right)
+        type_symbol = self.current_symtab.lookup(node.left.value).type
+        if type_symbol.name == REAL and type(value) is float:
+            self.memory[node.left.value] = value
+            return
+        if type_symbol.name == INTEGER and type(value) is int:
+            self.memory[node.left.value] = value
+            return
+        raise TypeError('Wrong Assigned Type. Need %s Type, %s founded'
+                        % (type_symbol, type(value).__name__))
+
+    def visit_type(self, node: Type):
+        pass
 
     def visit_var(self, node: Var):
-        if node.value in self.global_scope:
-            return self.global_scope.get(node.value)
+        value = self.memory.get(node.value)
+        if value is not None:
+            return value
         raise NameError('Unknown Identity {name}'.format(name=node.value))
 
     def visit_unaryop(self, node: UnaryOp):
@@ -285,15 +329,13 @@ def main():
     text = open(file=args.file, encoding='utf-8').read()
     lexer = Lexer(text)
     parser = Parser(lexer)
+    # parser
     root_node = parser.parse()
     # semantic analyzer
-    semantic = SemanticAnalyzer()
-    semantic.visit(root_node)
-    # interpreter = Interpreter()
-    # interpreter.visit(root_node)
-    # for var, value in interpreter.global_scope.items():
-    #     print(var, '=', value)
-    # print(interpreter.global_scope)
+    semantic = SemanticAnalyzer(root_node)
+    scopetab = semantic.analyze()
+    interpreter = Interpreter(root_node, scopetab)
+    interpreter.intreperter()
 
 
 if __name__ == '__main__':

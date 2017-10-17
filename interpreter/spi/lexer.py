@@ -99,7 +99,7 @@ class Lexer:
 
         if current_char in SINGLE_MARK_DICT:
             self.set_next_pos()
-            return SINGLE_MARK_DICT.get(current_char)
+            return SINGLE_MARK_DICT.get(current_char, )
 
         self.error()
 
