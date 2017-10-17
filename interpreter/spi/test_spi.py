@@ -1,24 +1,11 @@
 #!/usr/bin/env python3
 
 
-from spi import Parser, Lexer, Interpreter, SymbolTableBuilder
+from spi import Parser, Lexer, Interpreter, SemanticAnalyzer
 import spi
 
 __author__ = 'Aollio Hou'
 __email__ = 'aollio@outlook.com'
-
-program = """
-BEGIN
-    begin
-        number := 2;
-        a := number;
-        b := 10 * a + 10 * number / 4;
-        c := a - -b
-    END;
-    x := 11;
-    y := x * 2
-end.
-"""
 
 
 def main():
@@ -34,14 +21,13 @@ def symbol():
 
     parser = Parser(lexer)
     tree = parser.parse()
-    builder = SymbolTableBuilder(spi.SymbolTable())
+    builder = SemanticAnalyzer(spi.ScopedSymbolTable())
     builder.visit(tree)
 
-    print(builder.symbols)
+    print(builder.symtab)
     interpreter = Interpreter()
     interpreter.visit(node=tree)
     print(interpreter.global_scope)
-
 
 
 if __name__ == '__main__':
