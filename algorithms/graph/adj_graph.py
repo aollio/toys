@@ -1,6 +1,6 @@
 from typing import Iterable
 
-from .interface import Graph
+from interface import Graph
 
 
 class AdjGraph(Graph):
@@ -25,3 +25,6 @@ class AdjGraph(Graph):
 
     def edge_count(self) -> int:
         return self._edge_count
+
+    V = vertex_count
+    E = edge_count

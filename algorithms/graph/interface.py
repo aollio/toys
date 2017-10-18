@@ -9,6 +9,7 @@ __email__ = 'aollio@outlook.com'
 
 
 class Graph(metaclass=ABCMeta):
+    @abstractmethod
     def __init__(self, vertex_count):
         pass
 
@@ -51,8 +52,25 @@ class Graph(metaclass=ABCMeta):
         return string
 
 
-class Search(metaclass=ABCMeta):
+class Paths(metaclass=ABCMeta):
+    """在G中找出所有起点为s的路径"""
 
+    @abstractmethod
+    def __init__(self, g: Graph, s: int):
+        pass
+
+    @abstractmethod
+    def has_path_to(self, v: int) -> bool:
+        """是否存在从s到v的路径"""
+        pass
+
+    @abstractmethod
+    def path_to(self, v: int):
+        """s 到 v的路径，如果不存在则返回None"""
+        pass
+
+
+class Search(metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, graph: Graph, s: int):
         pass
