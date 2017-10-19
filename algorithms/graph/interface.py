@@ -84,6 +84,27 @@ class Search(metaclass=ABCMeta):
         pass
 
 
+class CC(metaclass=ABCMeta):
+    @abstractmethod
+    def __init__(self, graph: Graph):
+        pass
+
+    @abstractmethod
+    def connected(self, v: int, w: int) -> int:
+        """w和v是相连的吗"""
+        pass
+
+    @abstractmethod
+    def count(self) -> int:
+        """连通分量数"""
+        pass
+
+    @abstractmethod
+    def id(self, v: int) -> int:
+        """v所在的连通分量的标志符"""
+        pass
+
+
 def degree(graph: Graph, vertex: int) -> int:
     """
     计算V的度数
