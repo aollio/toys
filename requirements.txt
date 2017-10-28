@@ -1,0 +1,11 @@
+# graph
+matplotlib
+# deep learn
+tensorflow
+numpy
+# spider
+requests
+scipy
+pillow
+
+tornado
