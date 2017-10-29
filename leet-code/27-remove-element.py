@@ -32,6 +32,7 @@ class Solution:
                 nums.pop(index)
         return len(nums)
 
+
 def test(test_list, val, right_list):
     sol = Solution()
     try:
