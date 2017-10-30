@@ -3,7 +3,7 @@
 """
 The spirographs implemented by turtle. Smart turtle.
 This program draws Spirographs using the Turtle module.
-When run with no arguments, this program draws random Spirographs.
+When run with no arguments, this program draws random Spiro graphs.
 
 Terminology:
     R: radius of outer circle.
@@ -19,7 +19,6 @@ from fractions import gcd
 import argparse
 
 import math
-
 from datetime import datetime
 
 import sys

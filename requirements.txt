@@ -9,3 +9,6 @@ scipy
 pillow
 
 tornado
+
+# environment
+ipython
