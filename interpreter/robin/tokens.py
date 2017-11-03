@@ -40,6 +40,16 @@ SINGLE_MARK_DICT = {
     ')': Token(type=RPAREN, value=')'),
     ',': Token(type=COMMA, value=','),
     ':': Token(type=COLON, value=':'),
-    '\n': Token(type=NEWLINE, value='\n'),
+    # '\n': Token(type=NEWLINE, value='\n'),
+    # ' ': Token(type=SPACE, value=' '),
     '=': Token(type=ASSIGN, value='='),
+}
+
+INDENT = 'INDENT'
+
+IF, ELIF, ELSE = 'if', 'elif', 'else'
+PRESERVE_DICT = {
+    IF: Token(type=IF, value=IF),
+    ELIF: Token(type=ELIF, value=ELIF),
+    ELSE: Token(type=ELSE, value=ELSE)
 }

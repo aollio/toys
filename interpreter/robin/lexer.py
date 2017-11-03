@@ -21,6 +21,10 @@ class Lexer:
         self.text = text
         self.pos = 0
         self.current_char = self.text[self.pos]
+        self.tokens = []
+        while self.current_char is not None:
+            self._get_tokens()
+        self.tokens.append(Token(type=EOF))
 
     def next_pos(self):
         """将当前位置向后移一位"""
@@ -39,8 +43,21 @@ class Lexer:
         while self.current_char.isalnum() or self.current_char == '_':
             chars += self.current_char
             self.next_pos()
-        # token = RESERVE_DICT.get(chars, Token(type=ID, value=chars))
-        return Token(type=ID, value=chars)
+        token = PRESERVE_DICT.get(chars, Token(type=ID, value=chars))
+        return token
+
+    def newline_and_indent(self):
+        if self.current_char == '\n':
+            self.tokens.append(Token(type=NEWLINE, value=NEWLINE))
+            self.next_pos()
+        count = 0
+        while self.current_char == ' ':
+            count += 1
+            self.next_pos()
+        if count % 4 != 0:
+            raise Exception("Wrong Indent")
+        a = count // 4
+        [self.tokens.append(Token(type=INDENT, value=INDENT)) for x in range(a)]
 
     def number(self):
         """从输入中获取一个数字串"""
@@ -67,48 +84,71 @@ class Lexer:
             self.next_pos()
             while self.current_char is not None and self.text[self.pos] != '\n':
                 self.next_pos()
+        # self.next_pos is `\n` character
+        # so if the next line begin with `#`, eat the NEWLINE token
+        if self.current_char == '\n' and self._peek() in (None, '#'):
+            self.next_pos()
 
-    def skip_whitespace(self):
+    def skip_space(self):
         while self.current_char == ' ':
             self.next_pos()
 
-    def get_next_token(self):
+    def _get_tokens(self):
         """获取下一个token"""
 
-        # self.skip_whitespace()
-        self.skip_comment()
-
-        # 如果输入流结束, 返回一个EOF Token
-        if self.current_char is None:
-            return Token(type=EOF)
-
-        current_char = self.current_char
-
-        # id. keyword or variable
-        if current_char.isalpha() or current_char == '_':
-            return self.id()
-
-        # (multi)integer.
-        if current_char.isdigit():
-            return self.number()
-
-        if current_char in SINGLE_MARK_DICT:
-            self.next_pos()
-            return SINGLE_MARK_DICT.get(current_char, )
-
-        if current_char == '#':
+        while self.current_char is not None:
+            # self.skip_whitespace()
             self.skip_comment()
-            return self.get_next_token()
 
-        if current_char == ' ':
-            self.skip_whitespace()
-            return self.get_next_token()
+            current_char = self.current_char
 
-        self.error()
+            # id. keyword or variable
+            if current_char.isalpha() or current_char == '_':
+                self.tokens.append(self.id())
+                return
+            # (multi)integer.
+            if current_char.isdigit():
+                self.tokens.append(self.number())
+                return
 
-    def peek(self, seek=1):
+            if current_char == '\n':
+                self.newline_and_indent()
+                return
+
+            if current_char in SINGLE_MARK_DICT:
+                self.next_pos()
+                self.tokens.append(SINGLE_MARK_DICT.get(current_char, ))
+                return
+
+            if current_char == '#':
+                self.skip_comment()
+                self._get_tokens()
+                return
+
+            if current_char == ' ':
+                self.skip_space()
+                return self._get_tokens()
+                # return SINGLE_MARK_DICT.get(current_char,)
+
+            self.error()
+            # 如果输入流结束, 返回一个EOF Token
+            # if self.current_char is None:
+            #     return Token(type=EOF)
+
+    def _peek(self, seek=1):
         """向前看一个字符"""
         if self.pos + seek < len(self.text):
             return self.text[self.pos + seek]
         else:
             return None
+
+    def peek(self, seek=1):
+        if len(self.tokens) > seek + 1:
+            return self.tokens[seek]
+        else:
+            return Token(type=EOF)
+
+    def read(self):
+        if self.tokens:
+            return self.tokens.pop(0)
+        return Token(type=EOF)

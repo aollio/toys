@@ -3,7 +3,7 @@
 """
 Simple Robin Interpreter
 """
-from parser import *
+from pparser import *
 
 __author__ = 'Aollio Hou'
 __email__ = 'aollio@outlook.com'
@@ -110,12 +110,25 @@ class Interpreter(Visitor):
 
     def intreperter(self):
         self.visit(self.tree)
-        print(self.memory)
+        # print(self.memory)
+        for key, value in self.memory.items():
+            print('%s = %s' % (key, value))
 
     def visit_program(self, node: Program):
         print('Running...')
-        for statement in node.statement_list:
+        for statement in node.block.children:
             self.visit(statement)
+
+    def visit_block(self, node: Block):
+        for statement in node.children:
+            self.visit(statement)
+
+    def visit_if(self, node: If):
+        condition = self.visit(node.condition)
+        if condition:
+            self.visit(node.right_block)
+        else:
+            self.visit(node.wrong_block)
 
     def visit_assign(self, node: Assign):
         """Assign value will check type of variable"""

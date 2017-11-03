@@ -59,47 +59,134 @@ class Assign(AST):
         self.right = right
 
 
+class If(AST):
+    def __init__(self, condition, token, right_block, wrong_block):
+        self.wrong_block = wrong_block
+        self.right_block = right_block
+        self.token = token
+        self.condition = condition
+
+
+class Block(AST):
+    def __init__(self, children: list):
+        self.children = children
+
+
 class Program(AST):
-    def __init__(self, statement_list: list):
-        self.statement_list = statement_list
+    def __init__(self, children: Block):
+        self.block = children
 
 
 class Parser:
     def __init__(self, lexer: Lexer):
+        self.indent = 0
         self.lexer = lexer
-        self.current_token = lexer.get_next_token()
+        self.current_token = lexer.read()
 
     def error(self):
         raise Exception('Invalid syntax. Unknown identity %s' % self.current_token)
 
     def eat(self, token_type):
         if self.current_token.type == token_type:
-            self.current_token = self.lexer.get_next_token()
+            self.current_token = self.lexer.read()
         else:
             self.error()
 
-    def statement_list(self):
+    def program(self):
         """
-        Statement list.
-            <statement_list> -> <statement> | <statement> (NEWLINE statement)*
+        Program.
+            <program> -> <block>
         :return:
         """
+        return Program(self.block())
+
+    def block(self):
+        """
+        A code Block.
+            <block> -> <statement> | <statement> (NEWLINE statement)*
+        :return:
+        """
+        inblock = self.check_indent()
+        print(self.indent,self.check_indent())
+        if inblock:
+            self.eat_indent()
+        else:
+            return Block(children=[])
+
         node = self.statement()
         result = [node]
         while self.current_token.type == NEWLINE:
             self.eat(NEWLINE)
+            inblock = self.check_indent()
+            if inblock:
+                self.eat_indent()
+            else:
+                break
             result.append(self.statement())
-
-        return Program(result)
+        return Block(children=result)
 
     def statement(self):
         """
         A statement.
-             <statement> -> <assign_statement> | <empty>
+             <statement> -> <assign_statement>
+                         -> <if_statement>
+                         -> <empty>
         :return:
         """
         if self.current_token.type == ID:
             return self.assign_statement()
+        elif self.current_token.type == IF:
+            return self.if_statement()
+        else:
+            return self.empty()
+
+    def if_statement(self):
+        """
+        `if` statement:
+            <if_statement> -> IF <expr> COLON NEWLINE INDENT <block> <elif_statement>
+
+        :return:
+        """
+        token = self.current_token
+        self.eat(IF)
+        condition = self.expr()
+        self.eat(COLON)
+        self.eat(NEWLINE)
+        print('aaa',self.current_token)
+        self.indent += 1
+        right_block = self.block()
+        self.indent -= 1
+        wrong_block = self.elif_statement()
+
+        return If(condition=condition, token=token, right_block=right_block, wrong_block=wrong_block)
+
+    def elif_statement(self):
+        """
+        `elif` statement:
+            <elif_statement> -> ELIF <expr> COLON NEWLINE INDENT <block> <elif_statement>*
+                             -> ELSE COLON NEWLINE INDENT <block>
+                             -> <empty>
+        :return:
+        """
+        if self.current_token.type == ELIF:
+            token = self.current_token
+            self.eat(ELIF)
+            condition = self.expr()
+            self.eat(COLON)
+            self.eat(NEWLINE)
+            self.indent += 1
+            right_block = self.block()
+            self.indent -= 1
+            wrong_block = self.elif_statement()
+            return If(condition, token, right_block, wrong_block)
+        elif self.current_token.type == ELSE:
+            self.eat(ELSE)
+            self.eat(COLON)
+            self.eat(NEWLINE)
+            self.indent += 1
+            block = self.block()
+            self.indent -= 1
+            return block
         else:
             return self.empty()
 
@@ -144,6 +231,10 @@ class Parser:
             node = Op(left=node, op=op, right=right)
 
         return node
+
+    def skip_space(self):
+        while self.current_token.type == SPACE:
+            self.eat(SPACE)
 
     def term(self):
         """
@@ -195,10 +286,33 @@ class Parser:
             return expr
 
     def parse(self):
-        node = self.statement_list()
-        if self.current_token.type != EOF:
-            self.error()
+        node = self.block()
+        # if self.current_token.type != EOF:
+        #    self.error()
         return node
+
+    def check_indent(self):
+        indent = self.indent
+        if indent == 0:
+            return True
+        if self.current_token.type != INDENT:
+            return False
+        count = 0
+        seek = 0
+        while self.lexer.peek(seek) == INDENT:
+            count += 1
+            seek += 1
+        if count != indent - 1:
+            return False
+        return True
+
+    def eat_indent(self):
+        indent = self.indent
+        while indent != 0 and self.current_token.type == INDENT:
+            self.eat(INDENT)
+            indent -= 1
+        if indent:
+            raise IndentationError()
 
 
 def _parse(filename):
