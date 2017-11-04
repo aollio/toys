@@ -3,7 +3,7 @@ flag = 0
 if a > 5:
     print(5)
 else:
-    print(4)
+    print(print(5))
 # if a == 100:
 #     flag = 0
 # The simple sample

@@ -66,7 +66,7 @@ class Parser:
         """
         A statement.
              <statement> -> <assign_statement>
-                         -> <function_call>
+                         -> <function_call> LINE_END
                          -> <empty> LINE_END
                          -> <if_statement>
                          -> <while_statement>
@@ -79,6 +79,7 @@ class Parser:
                 statement = self.empty()
             elif self.lexer.peek_token().type == t.LPAREN:
                 statement = self.function_call()
+                self.eat(t.LINE_END)
             elif self.lexer.peek_token().type == t.ASSIGN:
                 statement = self.assign_statement()
             else:
@@ -97,12 +98,11 @@ class Parser:
     def function_call(self):
         """
         Function call.
-            <function_call> -> <variable> <argument_list> LINE_END
+            <function_call> -> <variable> <argument_list>
         :return:
         """
         fun_name = self.variable()
         arg_list = self.argument_list()
-        self.eat(t.LINE_END)
         return FunctionCallAST(name=fun_name, args=arg_list)
 
     @log_def
@@ -288,6 +288,7 @@ class Parser:
                      -> Integer
                      -> <variable>
                      -> LPAREN <expr> RPAREN
+                     -> <function_call>
         :return:
         """
 
@@ -306,7 +307,10 @@ class Parser:
             return Num(integer)
 
         elif self.current_token.type == t.ID:
-            return self.variable()
+            if self.lexer.peek_token().type == t.LPAREN:
+                return self.function_call()
+            else:
+                return self.variable()
         elif self.current_token.type == t.LPAREN:
             self.eat(t.LPAREN)
             expr = self.expr()
