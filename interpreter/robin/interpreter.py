@@ -54,13 +54,13 @@ class VarSymbol(Symbol):
     __repr__ = __str__
 
 
-class ProcedureSymbol(Symbol):
+class FunctionSymbol(Symbol):
     """
-    The type is None because in Pascal procedures don't return anything.
+    The type is None because in default function don't return anything.
     """
 
-    def __init__(self, name, params=None):
-        super(ProcedureSymbol, self).__init__(name)
+    def __init__(self, name, params=None, type=None):
+        super(FunctionSymbol, self).__init__(name, type)
         # a list of formal parameters
         self.params = params if params is not None else []
 
@@ -97,10 +97,38 @@ def op_operate(left, op, right):
         return left >= right
 
 
+class ScopeDict:
+    def __init__(self, parent=None, init=False):
+        self.scope = dict()
+        self.parent = parent
+        if init:
+            self._init_built_symbol()
+
+    def _init_built_symbol(self):
+        pass
+
+    def define(self, symbol: Symbol):
+        self.scope[symbol.name] = symbol
+
+    def lookup(self, name: str):
+        value = self.scope.get(name, None)
+        if value is not None:
+            return value
+        elif self.parent is not None:
+            return self.parent.lookup(name)
+        else:
+            raise ValueError('Unknown Symbol name %r' % name)
+
+
 class Memory(dict):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, init=False):
         super(Memory, self).__init__()
         self.parent = parent
+        if init:
+            self._init_built_symbol()
+
+    def _init_built_symbol(self):
+        self['print'] = print
 
     def get(self, k, **kwargs):
         value = super(Memory, self).get(k, None)
@@ -116,21 +144,23 @@ class Interpreter(Visitor):
         # symbol table
         self.tree = tree
         # global memory
-        self.memory = Memory()
+        self.memory = Memory(init=True)
 
     def intreperter(self):
         self.visit(self.tree)
         # print(self.memory)
-        for key, value in self.memory.items():
-            print('%s = %s' % (key, value))
+        # for key, value in self.memory.items():
+        #     print('%s = %s' % (key, value))
 
     def visit_program(self, node: Program):
-        print('Running...')
         self.visit(node.block)
 
     def visit_block(self, node: Block):
         for statement in node.children:
             self.visit(statement)
+
+    def visit_functioncallast(self, node: FunctionCallAST):
+        return self.memory[node.name](*[self.visit(arg) for arg in node.args])
 
     def visit_if(self, node: If):
         condition = self.visit(node.condition)
@@ -140,7 +170,6 @@ class Interpreter(Visitor):
             self.visit(node.wrong_block)
 
     def visit_while(self, node: While):
-        print('do while')
         while self.visit(node.condition):
             self.visit(node.block)
 

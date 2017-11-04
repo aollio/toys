@@ -22,7 +22,7 @@ class Token:
 PLUS, MINUS, MUL, DIV = 'PLUS', 'MINUS', 'MUL', 'DIV'
 GREAT_THAN, LESS_THAN = 'GREAT_THAN', 'LESS_THAN'
 DOT, COMMA, SEIM, LPAREN, RPAREN, COLON = 'DOT', 'COMMA', 'SEIM', 'LPAREN', 'RPAREN', 'COLON'
-SPACE, NEWLINE = 'SPACE', 'NEWLINE'
+SPACE = 'SPACE'
 ASSIGN = 'ASSIGN'
 EOF = 'EOF'
 # identity, variable type token
@@ -56,7 +56,7 @@ DOUBLE_MARK_DICT = {
     '==': Token(EQUAL, value=EQUAL)
 }
 
-INDENT = 'INDENT'
+INDENT, LINE_END = 'INDENT', 'LINE_END'
 
 IF, ELIF, ELSE = 'if', 'elif', 'else'
 WHILE = 'while'

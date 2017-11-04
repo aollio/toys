@@ -4,8 +4,15 @@
 __author__ = 'Aollio Hou'
 __email__ = 'aollio@outlook.com'
 
+from functools import partial
+import logging
+
 from tokens import Token
 import tokens as t
+from uutil import log_def
+
+log = logging.getLogger('Lexer')
+log_def = partial(log_def, log=log)
 
 
 ###############################################################################
@@ -24,7 +31,7 @@ class Lexer:
         self.current_char = self.text[self.pos]
         self.tokens = []
         while self.current_char is not None:
-            self._get_tokens()
+            self._parse_token()
         self.tokens.append(Token(type=t.EOF))
 
     def next_pos(self):
@@ -38,6 +45,7 @@ class Lexer:
             return
         self.current_char = self.text[self.pos]
 
+    @log_def
     def id(self):
         """从输入中获取一个标识符 Identity"""
         chars = ''
@@ -49,7 +57,7 @@ class Lexer:
 
     def newline_and_indent(self):
         if self.current_char == '\n':
-            self.tokens.append(Token(type=t.NEWLINE, value=t.NEWLINE))
+            self.tokens.append(Token(type=t.LINE_END, value=t.LINE_END))
             self.next_pos()
         count = 0
         while self.current_char == ' ':
@@ -58,8 +66,9 @@ class Lexer:
         if count % 4 != 0:
             raise Exception("Wrong Indent")
         a = count // 4
-        [self.tokens.append(Token(type=t.INDENT, value=t.INDENT)) for x in range(a)]
+        [self.tokens.append(Token(type=t.INDENT)) for x in range(a)]
 
+    @log_def
     def number(self):
         """从输入中获取一个数字串"""
         chars = ''
@@ -85,6 +94,7 @@ class Lexer:
             self.next_pos()
             while self.current_char is not None and self.text[self.pos] != '\n':
                 self.next_pos()
+            self.tokens.append(Token(type=t.LINE_END))
         # self.next_pos is `\n` character
         # so if the next line begin with `#`, eat the NEWLINE token
         if self.current_char == '\n' and self._peek_char() in (None, '#'):
@@ -94,12 +104,11 @@ class Lexer:
         while self.current_char == ' ':
             self.next_pos()
 
-    def _get_tokens(self):
+    @log_def
+    def _parse_token(self):
         """获取下一个token"""
 
         while self.current_char is not None:
-            # self.skip_whitespace()
-            self.skip_comment()
 
             current_char = self.current_char
 
@@ -119,7 +128,7 @@ class Lexer:
                 return
 
             # double mark， like '==', '<='...
-            if self.peek() is not None and self.current_char is not None and self.current_char + self._peek_char() in t.DOUBLE_MARK_DICT:
+            if self._peek_char() is not None and self.current_char is not None and self.current_char + self._peek_char() in t.DOUBLE_MARK_DICT:
                 mark = self.current_char + self._peek_char()
                 self.next_pos()
                 self.next_pos()
@@ -135,12 +144,10 @@ class Lexer:
             # comment
             if current_char == '#':
                 self.skip_comment()
-                self._get_tokens()
-                return
-
+                continue
             if current_char == ' ':
                 self.skip_space()
-                return self._get_tokens()
+                continue
                 # return SINGLE_MARK_DICT.get(current_char,)
 
             self.error()
@@ -155,7 +162,7 @@ class Lexer:
         else:
             return None
 
-    def peek(self, seek=1):
+    def peek_token(self, seek=0):
         if len(self.tokens) > seek + 1:
             return self.tokens[seek]
         else:
@@ -165,3 +172,24 @@ class Lexer:
         if self.tokens:
             return self.tokens.pop(0)
         return Token(type=t.EOF)
+
+
+def _main():
+    import argparse
+    parser = argparse.ArgumentParser("Simple pascal interpreter.")
+    parser.add_argument('file', help='the pascal file name')
+    args = parser.parse_args()
+    text = open(file=args.file, encoding='utf-8').read()
+    lexer = Lexer(text)
+    token = lexer.read()
+    while token.type != t.EOF:
+        print(token)
+        token = lexer.read()
+    print(Token(type=t.EOF))
+
+
+if __name__ == '__main__':
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+    _main()

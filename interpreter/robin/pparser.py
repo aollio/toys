@@ -1,93 +1,23 @@
 #!/usr/bin/env python3
 
-import logging
+from functools import partial
+from logging import getLogger
 from lexer import *
 from uutil import log_def
+from ast import *
 
 __author__ = 'Aollio Hou'
 __email__ = 'aollio@outlook.com'
 
-log = logging.getLogger('Parser')
+log = getLogger('Parser')
+log_def = partial(log_def, log=log)
 
-logging.basicConfig(level=logging.INFO)
+
 ###############################################################################
 #                                                                             #
 #  Parser                                                                     #
 #                                                                             #
 ###############################################################################
-class AST:
-
-    def __repr__(self):
-        return '<%s AST>' % self.__class__.__name__
-
-
-class Num(AST):
-    def __init__(self, token):
-        self.token = token
-        self.value = token.value
-
-
-class Op(AST):
-    def __init__(self, left, op, right):
-        self.right = right
-        self.token = op
-        self.value = op.value
-        self.left = left
-
-
-class UnaryOp(AST):
-    def __init__(self, op, expr):
-        self.expr = expr
-        self.token = op
-        self.value = op.value
-
-
-class EmptyOp(AST):
-    """Represent an empty statement. e.g. `BEGIN END` """
-    pass
-
-
-class Var(AST):
-    """Represent a variable. the field `value` is variable's name"""
-
-    def __init__(self, token):
-        self.token = token
-        self.value = token.value
-
-
-class Assign(AST):
-    """The assign statement. left is a variable, right is a express"""
-
-    def __init__(self, left, token, right):
-        self.left = left
-        self.token = token
-        self.right = right
-
-
-class If(AST):
-    def __init__(self, condition, token, right_block, wrong_block):
-        self.wrong_block = wrong_block
-        self.right_block = right_block
-        self.token = token
-        self.condition = condition
-
-
-class While(AST):
-    def __init__(self, condition, token, block):
-        self.block = block
-        self.token = token
-        self.condition = condition
-
-
-class Block(AST):
-    def __init__(self, children: list):
-        self.children = children
-
-
-class Program(AST):
-    def __init__(self, children: Block):
-        self.block = children
-
 
 class Parser:
     def __init__(self, lexer: Lexer):
@@ -121,25 +51,13 @@ class Parser:
     def block(self):
         """
         A code Block.
-            <block> -> <statement> | <statement> (NEWLINE statement)*
+            <block> -> <statement> | <statement> (<statement>)*
         :return:
         """
         log.info('parsing block...')
-        inblock = self.check_indent()
-        if inblock:
+        result = []
+        while self.check_indent() and self.current_token.type != t.EOF:
             self.eat_indent()
-        else:
-            return Block(children=[])
-
-        node = self.statement()
-        result = [node]
-        while self.current_token.type == t.NEWLINE:
-            self.eat(t.NEWLINE)
-            inblock = self.check_indent()
-            if inblock:
-                self.eat_indent()
-            else:
-                break
             result.append(self.statement())
         return Block(children=result)
 
@@ -148,32 +66,74 @@ class Parser:
         """
         A statement.
              <statement> -> <assign_statement>
+                         -> <function_call>
+                         -> <empty> LINE_END
                          -> <if_statement>
                          -> <while_statement>
-                         -> <empty>
         :return:
         """
+        statement = None
+        # 分辨是赋值，还是函数调用
         if self.current_token.type == t.ID:
-            return self.assign_statement()
+            if self.lexer.peek_token() is None:
+                statement = self.empty()
+            elif self.lexer.peek_token().type == t.LPAREN:
+                statement = self.function_call()
+            elif self.lexer.peek_token().type == t.ASSIGN:
+                statement = self.assign_statement()
+            else:
+                statement = self.empty()
         elif self.current_token.type == t.IF:
-            return self.if_statement()
+            statement = self.if_statement()
         elif self.current_token.type == t.WHILE:
-            return self.while_statement()
+            statement = self.while_statement()
         else:
-            return self.empty()
+            statement = self.empty()
+            self.eat(t.LINE_END)
+
+        return statement
+
+    @log_def
+    def function_call(self):
+        """
+        Function call.
+            <function_call> -> <variable> <argument_list> LINE_END
+        :return:
+        """
+        fun_name = self.variable()
+        arg_list = self.argument_list()
+        self.eat(t.LINE_END)
+        return FunctionCallAST(name=fun_name, args=arg_list)
+
+    @log_def
+    def argument_list(self):
+        """
+        Argument list.
+            <argument_list> -> LPAREN (<expr> (COMMA <expr>)*)? RPAREN
+        :return:
+        """
+        args = []
+        self.eat(t.LPAREN)
+        if self.current_token.type != t.RPAREN:
+            args.append(self.expr())
+            while self.current_token.type == t.COMMA:
+                self.eat(t.COMMA)
+                args.append(self.expr())
+        self.eat(t.RPAREN)
+        return args
 
     @log_def
     def while_statement(self):
         """
         `while` statement:
-            <while_statement> -> WHILE <epxr> COLON NEWLINE INDENT <block>
+            <while_statement> -> WHILE <epxr> COLON LINE_END INDENT <block>
         :return:
         """
         token = self.current_token
         self.eat(t.WHILE)
         condition = self.expr()
         self.eat(t.COLON)
-        self.eat(t.NEWLINE)
+        self.eat(t.LINE_END)
         self.indent += 1
         right_block = self.block()
         self.indent -= 1
@@ -184,7 +144,7 @@ class Parser:
     def if_statement(self):
         """
         `if` statement:
-            <if_statement> -> IF <expr> COLON NEWLINE INDENT <block> <elif_statement>
+            <if_statement> -> IF <expr> COLON LINE_END INDENT <block> <elif_statement>
 
         :return:
         """
@@ -192,7 +152,8 @@ class Parser:
         self.eat(t.IF)
         condition = self.expr()
         self.eat(t.COLON)
-        self.eat(t.NEWLINE)
+        self.eat(t.LINE_END)
+
         self.indent += 1
         right_block = self.block()
         self.indent -= 1
@@ -204,8 +165,8 @@ class Parser:
     def elif_statement(self):
         """
         `elif` statement:
-            <elif_statement> -> ELIF <expr> COLON NEWLINE INDENT <block> <elif_statement>*
-                             -> ELSE COLON NEWLINE INDENT <block>
+            <elif_statement> -> ELIF <expr> COLON LINE_END INDENT <block> <elif_statement>*
+                             -> ELSE COLON LINE_END INDENT <block>
                              -> <empty>
         :return:
         """
@@ -214,7 +175,7 @@ class Parser:
             self.eat(t.ELIF)
             condition = self.expr()
             self.eat(t.COLON)
-            self.eat(t.NEWLINE)
+            self.eat(t.LINE_END)
             self.indent += 1
             right_block = self.block()
             self.indent -= 1
@@ -223,7 +184,8 @@ class Parser:
         elif self.current_token.type == t.ELSE:
             self.eat(t.ELSE)
             self.eat(t.COLON)
-            self.eat(t.NEWLINE)
+            self.eat(t.LINE_END)
+
             self.indent += 1
             block = self.block()
             self.indent -= 1
@@ -239,13 +201,14 @@ class Parser:
     def assign_statement(self):
         """
         Assign statement.
-            <assign_statement> -> <variable> ASSIGN <expr>
+            <assign_statement> -> <variable> ASSIGN <expr> LINE_END
         :return:
         """
         left = self.variable()
         token = self.current_token
         self.eat(t.ASSIGN)
         right = self.expr()
+        self.eat(t.LINE_END)
         return Assign(left=left, token=token, right=right)
 
     @log_def
@@ -295,7 +258,6 @@ class Parser:
 
         return node
 
-    @log_def
     def skip_space(self):
         while self.current_token.type == t.SPACE:
             self.eat(t.SPACE)
@@ -357,6 +319,7 @@ class Parser:
         #     self.error(need=EOF)
         return node
 
+    @log_def
     def check_indent(self):
         indent = self.indent
         if indent == 0:
@@ -365,13 +328,15 @@ class Parser:
             return False
         count = 0
         seek = 0
-        while self.lexer.peek(seek) == t.INDENT:
+        while self.lexer.peek_token(seek).type == t.INDENT:
             count += 1
             seek += 1
-        if count != indent - 1:
+        if count == indent - 1:
+            return True
+        else:
             return False
-        return True
 
+    @log_def
     def eat_indent(self):
         indent = self.indent
         while indent != 0 and self.current_token.type == t.INDENT:
@@ -383,9 +348,22 @@ class Parser:
     def __repr__(self):
         return '<%s>' % self.__class__.__name__
 
-def _parse(filename):
-    with open(filename) as file:
-        text = file.read()
-        lexer = Lexer(text=text)
-        parser = Parser(lexer)
-        return parser.parse()
+
+def _main():
+    import argparse
+    parser = argparse.ArgumentParser("Simple pascal interpreter.")
+    parser.add_argument('file', help='the pascal file name')
+    args = parser.parse_args()
+    text = open(file=args.file, encoding='utf-8').read()
+    lexer = Lexer(text)
+    parser = Parser(lexer)
+    # parser
+    root_node = parser.parse()
+    return root_node
+
+
+if __name__ == '__main__':
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+    _main()
