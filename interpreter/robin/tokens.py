@@ -20,6 +20,7 @@ class Token:
 
 # operators. integer div is integer div.
 PLUS, MINUS, MUL, DIV = 'PLUS', 'MINUS', 'MUL', 'DIV'
+GREAT_THAN, LESS_THAN = 'GREAT_THAN', 'LESS_THAN'
 DOT, COMMA, SEIM, LPAREN, RPAREN, COLON = 'DOT', 'COMMA', 'SEIM', 'LPAREN', 'RPAREN', 'COLON'
 SPACE, NEWLINE = 'SPACE', 'NEWLINE'
 ASSIGN = 'ASSIGN'
@@ -43,13 +44,25 @@ SINGLE_MARK_DICT = {
     # '\n': Token(type=NEWLINE, value='\n'),
     # ' ': Token(type=SPACE, value=' '),
     '=': Token(type=ASSIGN, value='='),
+    '>': Token(type=GREAT_THAN, value='>'),
+    '<': Token(type=LESS_THAN, value='<')
+}
+LESS_EQUAL, GREAT_EQUAL = '<=', '>='
+EQUAL = '=='
+# 双符号组合
+DOUBLE_MARK_DICT = {
+    '<=': Token(LESS_EQUAL, value=LESS_EQUAL),
+    '>=': Token(GREAT_EQUAL, value=GREAT_EQUAL),
+    '==': Token(EQUAL, value=EQUAL)
 }
 
 INDENT = 'INDENT'
 
 IF, ELIF, ELSE = 'if', 'elif', 'else'
+WHILE = 'while'
 PRESERVE_DICT = {
     IF: Token(type=IF, value=IF),
     ELIF: Token(type=ELIF, value=ELIF),
-    ELSE: Token(type=ELSE, value=ELSE)
+    ELSE: Token(type=ELSE, value=ELSE),
+    WHILE: Token(type=WHILE, value=WHILE)
 }

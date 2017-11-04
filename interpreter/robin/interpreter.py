@@ -85,6 +85,16 @@ def op_operate(left, op, right):
         return left / right
     elif op == '//':
         return left // right
+    elif op == '==':
+        return left == right
+    elif op == '<=':
+        return left <= right
+    elif op == '<':
+        return left < right
+    elif op == '>':
+        return left > right
+    elif op == '>=':
+        return left >= right
 
 
 class Memory(dict):
@@ -116,8 +126,7 @@ class Interpreter(Visitor):
 
     def visit_program(self, node: Program):
         print('Running...')
-        for statement in node.block.children:
-            self.visit(statement)
+        self.visit(node.block)
 
     def visit_block(self, node: Block):
         for statement in node.children:
@@ -129,6 +138,11 @@ class Interpreter(Visitor):
             self.visit(node.right_block)
         else:
             self.visit(node.wrong_block)
+
+    def visit_while(self, node: While):
+        print('do while')
+        while self.visit(node.condition):
+            self.visit(node.block)
 
     def visit_assign(self, node: Assign):
         """Assign value will check type of variable"""
