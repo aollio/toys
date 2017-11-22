@@ -12,3 +12,6 @@ tornado
 
 # environment
 ipython
+
+#other
+pyobjc

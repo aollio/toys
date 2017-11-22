@@ -1,9 +1,6 @@
-a = 2
-flag = 0
-if a > 5:
-    print(5)
-else:
-    print(print(5))
+a = 24
+flag = 2.5
+print(min(a, flag))
 # if a == 100:
 #     flag = 0
 # The simple sample

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from token import *
+from spitoken import *
 __author__ = 'Aollio Hou'
 __email__ = 'aollio@outlook.com'
 
