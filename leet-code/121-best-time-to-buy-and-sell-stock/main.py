@@ -30,14 +30,12 @@ class Solution:
         :type prices: List[int]
         :rtype: int
         """
-        maxvalue = 0
-        days = len(prices)
-        for curr in range(days):
-            for nextday in range(curr + 1, days):
-                delta = prices[nextday] - prices[curr]
-                if delta > maxvalue:
-                    maxvalue = delta
-        return maxvalue
+        cur_best, global_best = 0, 0
+        for i in range(1, len(prices)):
+            cur_best = max(0, cur_best + (prices[i] - prices[i - 1]))
+            global_best = max(cur_best, global_best)
+            print(cur_best, global_best)
+        return global_best
 
 
 def test(prices: list, value: int):
@@ -47,7 +45,8 @@ def test(prices: list, value: int):
 
 def main():
     test([7, 1, 5, 3, 6, 4], 5)
-    test([7, 6, 4, 3, 1], 0)
+    # test([7, 6, 4, 3, 1], 0)
+    print('passed')
 
 
 if __name__ == '__main__':
