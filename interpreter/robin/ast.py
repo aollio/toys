@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+"""
+AST, abstract semantic tree.
+"""
 
 __author__ = 'Aollio Hou'
 __email__ = 'aollio@outlook.com'
@@ -13,6 +16,12 @@ class AST:
 class Num(AST):
     def __init__(self, token):
         self.token = token
+        self.value = token.value
+
+
+class Bool(AST):
+    def __init__(self, token):
+        self.token = token,
         self.value = token.value
 
 
@@ -85,12 +94,23 @@ class Block(AST):
         self.children = children
 
 
-class FunctionCallAST(AST):
+class FunctionDef(AST):
+    """
+    Function definition.
+    """
+
+    def __init__(self, name: Var, params: list, block: Block):
+        self.block = block
+        self.params = params
+        self.name = name.value
+
+
+class FunctionCall(AST):
     """
     Represent a function.
     """
 
-    def __init__(self, name: Var, args):
+    def __init__(self, name: Var, args: list):
         self.args = args
         self.name = name.value
 

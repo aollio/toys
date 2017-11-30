@@ -27,8 +27,11 @@ ASSIGN = 'ASSIGN'
 EOF = 'EOF'
 # identity, variable type token
 ID = 'ID'
-REAL_CONST = 'REAL'
-INTEGER_CONST = 'INTEGER'
+CONST_REAL = 'REAL'
+CONST_INTEGER = 'INTEGER'
+CONST_BOOL = 'BOOL'
+
+
 # 单个符号标记
 SINGLE_MARK_DICT = {
     '+': Token(type=PLUS, value='+'),
@@ -56,13 +59,18 @@ DOUBLE_MARK_DICT = {
     '==': Token(EQUAL, value=EQUAL)
 }
 
-INDENT, LINE_END = 'INDENT', 'LINE_END'
 
+INDENT, LINE_END = 'INDENT', 'LINE_END'
+# keyword
+DEF = 'def'
 IF, ELIF, ELSE = 'if', 'elif', 'else'
 WHILE = 'while'
 PRESERVE_DICT = {
     IF: Token(type=IF, value=IF),
     ELIF: Token(type=ELIF, value=ELIF),
     ELSE: Token(type=ELSE, value=ELSE),
-    WHILE: Token(type=WHILE, value=WHILE)
+    WHILE: Token(type=WHILE, value=WHILE),
+    DEF: Token(type=DEF, value=DEF),
+    'False': Token(type=CONST_BOOL, value=False),
+    'True': Token(type=CONST_BOOL, value=True)
 }

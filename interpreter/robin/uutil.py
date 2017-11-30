@@ -7,7 +7,7 @@ __email__ = 'aollio@outlook.com'
 # _log = logging.getLogger('Util')
 
 _level = -1
-_step = '-->'
+_step = '    '
 
 
 def log_def(func, log=logging.getLogger('Util')):

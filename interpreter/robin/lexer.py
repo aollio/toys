@@ -82,9 +82,9 @@ class Lexer:
             while self.current_char is not None and self.current_char.isdigit():
                 chars += self.current_char
                 self.next_pos()
-            return Token(type=t.REAL_CONST, value=float(chars))
+            return Token(type=t.CONST_REAL, value=float(chars))
         else:
-            return Token(type=t.INTEGER_CONST, value=int(chars))
+            return Token(type=t.CONST_INTEGER, value=int(chars))
 
     def error(self):
         raise Exception("Invalid Character '%s'" % self.text[self.pos])

@@ -2,11 +2,14 @@
 
 
 from interpreter import *
+
 __author__ = 'Aollio Hou'
 __email__ = 'aollio@outlook.com'
 
 
 def main():
+    import logging
+    logging.basicConfig(level=logging.INFO)
     import argparse
     parser = argparse.ArgumentParser("Simple Robin interpreter.")
     parser.add_argument('file', help='the pascal file name')

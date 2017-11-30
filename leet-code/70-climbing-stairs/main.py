@@ -60,5 +60,9 @@ def main():
     test(4, 5)
 
 
+def say(msg=None):
+    print('say %s' % msg)
+
+
 if __name__ == '__main__':
     main()
