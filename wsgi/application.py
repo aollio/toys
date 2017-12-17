@@ -13,6 +13,11 @@ def application(environ, start_response):
     return response_body
 
 
+import os
+
+a = 'asd'
+print(a.startswith('a'))
+
 def main():
     pass
 

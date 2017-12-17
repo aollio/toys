@@ -151,7 +151,6 @@ class SemanticAnalyzer(Visitor):
         pre_scope = self.current_scope
         print('ENTER scope: %s' % proc_name)
         # Scope for parameters and local variables
-        # todo 这里level不应该直接赋值为2
         procedure_scope = ScopedSymbolTable(
             scope_name=proc_name,
             scope_level=self.current_scope.scope_level + 1,
