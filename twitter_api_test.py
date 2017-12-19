@@ -35,7 +35,7 @@ def get_all_tweets(screen_name=None, user_id=None):
     print('All statuses count:', user.statuses_count)
     statuses = [user.status]
     req_count = statuses_count // TIMELINE_PER_REQ_COUNT + 1
-    # todo. Now ignoring twitter limiting. Per 15 minutes can get max 180K statuses.
+    # Now ignoring twitter limiting. Per 15 minutes can get max 180K statuses.
     print('Request count:', req_count)
     for _ in range(req_count):
         statuses.extend(
