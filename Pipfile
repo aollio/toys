@@ -10,12 +10,14 @@ name = "pypi"
 matplotlib = "*"
 tensorflow = "*"
 numpy = "*"
-requests = "*"
+requests[socks] = "*"
+pysocks = "*"
 scipy = "*"
 pillow = "*"
 tornado = "*"
 ipython = "*"
 pyobjc = "*"
+python-twitter = "*"
 
 
 [dev-packages]

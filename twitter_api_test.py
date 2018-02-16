@@ -10,7 +10,7 @@ PROXIES = {'https': 'socks5://127.0.0.1:1086'}
 
 # tweets = api.GetUserTimeline()
 
-TIMELINE_PER_REQ_COUNT = 200
+TIMELINE_PER_REQ_COUNT = 20
 TIMELINE_WINDOW_LIMIT = 900
 
 _api = None
@@ -19,9 +19,11 @@ _api = None
 def get_api():
     global _api
     if not _api:
-        _api = twitter.Api(CONSUMER_KEY, CONSUMER_SECRET,
-                           ACCESS_TOKEN_KEY, ACCESS_TOKEN_SECRET,
-                           proxies=PROXIES)
+        _api = twitter.Api(
+            CONSUMER_KEY, CONSUMER_SECRET,
+            ACCESS_TOKEN_KEY, ACCESS_TOKEN_SECRET,
+            proxies=PROXIES)
+        _api.GetStatus()
 
     return _api
 
@@ -44,6 +46,16 @@ def get_all_tweets(screen_name=None, user_id=None):
     return statuses
 
 
+def get_lastest_tweets(screen_name):
+    api = get_api()
+    if not screen_name:
+        raise ValueError('Screen name is None')
+    statues = api.GetUserTimeline(screen_name=screen_name,
+                                  count=TIMELINE_PER_REQ_COUNT,
+                                  include_rts=False)
+    return [item.AsDict() for item in statues]
+
+# rogerkver
 if __name__ == '__main__':
     import argparse
 
@@ -51,7 +63,7 @@ if __name__ == '__main__':
     parser.add_argument(default=None, dest='screen_name', help='User screen name. e.g. @one')
     args = parser.parse_args()
 
-    statues = get_all_tweets(args.screen_name)
+    statues = get_lastest_tweets(args.screen_name)
     json_statues = [status.AsJsonString() for status in statues]
     all_json_str = '[' + ','.join(json_statues) + ']'
     with open(args.screen_name + '.json', 'w+') as file:
